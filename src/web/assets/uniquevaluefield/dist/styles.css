@@ -1,0 +1,46 @@
+.unique_value_field_wrapper {
+    display: flex;
+    position: relative;
+}
+
+.errors .unique_value_field_wrapper input {
+    border-color: #dc2626;
+}
+
+input.unique_value_field.readonly {
+    border-right: 0;
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.unique_value_field[disabled] {
+    background-color: rgba(96, 125, 159, 0.05);
+    border-color: rgba(96, 125, 159, 0.15);
+    color: rgba(63, 77, 90, 0.8);
+}
+
+button.unique_value_field_copy_button {
+    width: 40px;
+    text-align: center;
+    border: 1px solid rgba(96, 125, 159, 0.15);
+    border-radius: 0 4px 4px 0;
+    transition: border-color .25s;
+    margin-left: -0px;
+}
+
+button.unique_value_field_copy_button svg {
+    width: 14px;
+    display: inline;
+    padding-bottom: 2px;
+    fill: rgba(63, 77, 90, 0.8);
+    transition: fill .25s;
+}
+
+button.unique_value_field_copy_button:hover {
+    border-color: rgba(96, 125, 159, 0.25);
+}
+
+button.unique_value_field_copy_button:hover svg {
+    fill: rgb(63, 77, 90);
+}
+

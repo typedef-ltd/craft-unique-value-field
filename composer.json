@@ -1,0 +1,71 @@
+{
+  "name": "typedef/craft-unique-value-field",
+  "description": "A Craft CMS field type for enforcing unique values with flexible scoping and optional format validation.",
+  "type": "craft-plugin",
+  "keywords": [
+    "craft cms",
+    "craft plugin",
+    "unique field",
+    "validation"
+  ],
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Typedef Limited",
+      "homepage": "https://www.typedef.co"
+    }
+  ],
+  "support": {
+    "email": "support@typedef.co",
+    "issues": "https://github.com/typedef-ltd/craft-unique-value-field/issues?state=open",
+    "source": "https://github.com/typedef-ltd/craft-unique-value-field",
+    "docs": "https://github.com/typedef-ltd/craft-unique-value-field/blob/main/README.md"
+  },
+  "require": {
+    "php": ">=8.2",
+    "craftcms/cms": "^5.0.0"
+  },
+  "require-dev": {
+    "codeception/codeception": "^5.0",
+    "codeception/module-asserts": "^3.0",
+    "codeception/module-yii2": "^1.1",
+    "craftcms/ecs": "dev-main",
+    "craftcms/phpstan": "dev-main",
+    "phpstan/phpstan": "^2.1",
+    "vlucas/phpdotenv": "^5.6"
+  },
+  "autoload": {
+    "psr-4": {
+      "typedef\\uniquevaluefield\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "typedef\\uniquevaluefield\\tests\\": "tests/"
+    }
+  },
+  "extra": {
+    "name": "Unique Value Field",
+    "handle": "unique-value-field",
+    "developer": "Typedef Limited",
+    "developerUrl": "https://www.typedef.co",
+    "class": "typedef\\uniquevaluefield\\UniqueValueFieldPlugin"
+  },
+  "scripts": {
+    "ecs-check": "ecs check --ansi",
+    "ecs-fix": "ecs check --ansi --fix",
+    "phpstan": "phpstan --memory-limit=1G",
+    "test": "codecept run integration --fail-fast",
+    "test-integration": "codecept run integration --fail-fast"
+  },
+  "config": {
+    "sort-packages": true,
+    "platform": {
+      "php": "8.2"
+    },
+    "allow-plugins": {
+      "craftcms/plugin-installer": true,
+      "yiisoft/yii2-composer": true
+    }
+  }
+}

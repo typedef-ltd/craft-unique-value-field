@@ -1,0 +1,192 @@
+{% import "_includes/forms" as forms %}
+
+<div class="nested-fields">
+    {{ forms.textField({
+        label: "Placeholder Text"|t('app'),
+        instructions: "The text that will be shown if the field doesn’t have a value."|t('app'),
+        id: 'placeholder',
+        name: 'placeholder',
+        value: field.placeholder,
+        errors: field.getErrors('placeholder')
+    }) }}
+
+    {{ forms.lightswitchField({
+        label: "Use a monospaced font"|t('app'),
+        name: 'code',
+        on: field.code,
+    }) }}
+</div>
+
+<hr>
+
+{{ forms.lightswitchField({
+    label: "Scope uniqueness to site"|t('unique-value-field'),
+    instructions: "Whether uniqueness check should consider only uses of the field in the same site"|t('unique-value-field'),
+    name: 'scopeSite',
+    on: field.scopeSite,
+}) }}
+
+{{ forms.lightswitchField({
+    label: "Scope uniqueness to element type"|t('unique-value-field'),
+    instructions: "Whether uniqueness check should consider only elements of the same type"|t('unique-value-field'),
+    name: 'scopeElementType',
+    on: field.scopeElementType,
+}) }}
+
+{{ forms.lightswitchField({
+    label: "Scope uniqueness to section"|t('unique-value-field'),
+    instructions: "Whether uniqueness check should consider only entries in the same section (only applies to Entries)"|t('unique-value-field'),
+    name: 'scopeEntrySection',
+    on: field.scopeEntrySection,
+}) }}
+
+{{ forms.lightswitchField({
+    label: "Scope uniqueness to entry type"|t('unique-value-field'),
+    instructions: "Whether uniqueness check should consider only entries of the same type (only applies to Entries)"|t('unique-value-field'),
+    name: 'scopeEntryType',
+    on: field.scopeEntryType,
+}) }}
+
+{% set scopeCustomFieldOptions = [{ value: null, label: '(None)' }] %}
+{% for otherField in craft.app.getFields().getAllFields() %}
+    {% if field.id != otherField.id %}
+        {% set scopeCustomFieldOptions = scopeCustomFieldOptions|merge([{ value: otherField.id, label: otherField.name }]) %}
+    {% endif %}
+{% endfor %}
+{{ forms.selectField({
+    label: 'Scope by another custom field'|t('unique-value-field'),
+    instructions: 'Choose another custom field to use as a grouping key. If the chosen field is not present on the element, or is later removed, this scope will not apply.'|t('unique-value-field'),
+    name: 'scopeByCustomFieldId',
+    options: scopeCustomFieldOptions,
+    value: field.scopeByCustomFieldId,
+}) }}
+
+{% if field.allowCaseInsensitive() %}
+    {{ forms.lightswitchField({
+        label: "Case sensitive"|t('unique-value-field'),
+        name: 'caseSensitive',
+        on: field.caseSensitive,
+    }) }}
+{% endif %}
+
+{{ forms.lightswitchField({
+    label: "Read only"|t('unique-value-field'),
+    instructions: "Prevents the field value from being edited in the Control Panel after the element is first saved. A copy button will be provided for ease of copying the value out."|t('unique-value-field'),
+    name: 'readOnly',
+    on: field.readOnly,
+}) }}
+
+{{ forms.textField({
+    label: "Custom error message"|t('unique-value-field'),
+    instructions: "The error message that will be shown if the field fails validation. Note: you can use {value} to output the value dynamically in the error message, and {element} to show the title of the element which conflicts with this element."|t('unique-value-field'),
+    id: 'customErrorMessage',
+    name: 'customErrorMessage',
+    value: field.customErrorMessage,
+    placeholder: field.getDefaultErrorMessage(),
+    errors: field.getErrors('customErrorMessage')
+}) }}
+
+{{ forms.lightswitchField({
+    label: 'Enable format validation'|t('unique-value-field'),
+    name: 'enableFormatValidation',
+    on: field.enableFormatValidation,
+    toggle: 'formatValidationContainer',
+    containerAttributes: {
+        data: {
+            'enable-format-validation': true
+        }
+    }
+}) }}
+
+<div id="formatValidationContainer" class="nested-fields{% if not field.enableFormatValidation %} hidden{% endif %}" data-error-key="formatValidation">
+    {# Format preset dropdown #}
+    {% set preset_options = [] %}
+    {% for key, label in presets %}
+        {% set preset_options = preset_options|merge([{ value: key, label: label }]) %}
+    {% endfor %}
+    {{ forms.selectField({
+        label: 'Format preset'|t('unique-value-field'),
+        instructions: 'Pick one of the common formats, or choose “Custom Regex” to enter your own.'|t('unique-value-field'),
+        id: 'format-preset',
+        name: 'formatPreset',
+        options: preset_options,
+        value: field.formatPreset,
+        toggle: true,
+        targetPrefix: 'format-preset-',
+        inputAttributes: {
+            data: {
+                'format-preset-select': true
+            }
+        }
+    }) }}
+
+    {# Custom regex input (only when “Custom Regex” is selected) #}
+    <div id="format-preset-custom" class="{% if field.formatPreset != 'custom' %} hidden{% endif %}">
+        {{ forms.textField({
+            label:        'Custom regex'|t('unique-value-field'),
+            instructions: 'Enter a regular expression (without delimiters).'|t('unique-value-field'),
+            id:           'custom-regex',
+            name:         'customRegex',
+            value:        field.customRegex
+        }) }}
+    </div>
+
+    {{ forms.textField({
+        label:        'Format error message'|t('unique-value-field'),
+        instructions: 'Shown when the value does not match the required format.'|t('unique-value-field'),
+        id:           'format-error-message',
+        name:         'formatErrorMessage',
+        value:        field.formatErrorMessage
+    }) }}
+</div>
+
+<div data-id="character-range-limits" class="nested-fields">
+    {{ forms.textField({
+        label: "Minimum characters"|t('unique-value-field'),
+        id: 'min-chars',
+        name: 'minChars',
+        value: field.minChars,
+        size: 3,
+    }) }}
+
+    {{ forms.textField({
+        label: "Maximum characters"|t('unique-value-field'),
+        id: 'max-chars',
+        name: 'maxChars',
+        value: field.maxChars,
+        size: 3,
+    }) }}
+</div>
+
+<div data-id="auto-suffix-duplicates" class="nested-fields{% if field.enableFormatValidation and field.formatPreset != '' and field.formatPreset != 'slug' %} disabled{% endif %}">
+    {{ forms.lightswitchField({
+        label: 'Auto suffix duplicates'|t('unique-value-field'),
+        instructions: "If true, then instead of a validation error for a duplicate, a numbered suffix will be added to force the value to be unique, e.g. '-1'."|t('unique-value-field'),
+        name: 'autoSuffixDuplicates',
+        on: field.autoSuffixDuplicates and (not field.enableFormatValidation or field.formatPreset == '' or field.formatPreset == 'slug'),
+    }) }}
+</div>
+
+<script>
+    const formatPresets = document.querySelector('[data-format-preset-select]');
+    const formatValidationInput = document.querySelector('[data-enable-format-validation] input[type="checkbox"]');
+    const autoSuffixDuplicates = document.querySelector('[data-id="auto-suffix-duplicates"]');
+
+    function formatPresetAllowsAutoSuffixDuplicates() {
+        return (formatPresets.value === '' || formatPresets.value === 'slug');
+    }
+
+    function updateAutoSuffixDuplicatesState() {
+        const formatValidationEnabled = !!(formatValidationInput && formatValidationInput.checked);
+        const allowed = !formatValidationEnabled || formatPresetAllowsAutoSuffixDuplicates();
+        autoSuffixDuplicates.classList.toggle('disabled', !allowed);
+    }
+
+    if (formatPresets && autoSuffixDuplicates) {
+        document.addEventListener('change', (e) => {
+            if (e.target.matches('[data-format-preset-select]') || e.target === formatValidationInput) {
+                updateAutoSuffixDuplicatesState();
+            }
+        });
+    }
+</script>

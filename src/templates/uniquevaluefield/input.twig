@@ -1,0 +1,34 @@
+{% import "_includes/forms" as forms %}
+
+{% set readOnly = field.readOnly
+    and element is defined
+    and element.id
+    and value|trim != ''
+    and not (name in element.errors|keys)
+%}
+
+{% set params = {
+    id: id ?? field.getInputId(),
+    describedBy: field.describedBy,
+    name: name,
+    value: value,
+    class: [
+        'unique_value_field',
+        'nicetext',
+        readOnly ? 'readonly',
+        field.code ? 'code',
+    ]|filter,
+    maxlength: field.maxChars,
+    showCharsLeft: true,
+    placeholder: placeholder,
+    required: field.required,
+    orientation: orientation ?? null,
+    disabled: readOnly ?? null
+} %}
+
+<div class="unique_value_field_wrapper">
+    {{ forms.text(params) }}
+    {% if readOnly %}
+        <button type="button" class="unique_value_field_copy_button" aria-label="{{ 'Copy value'|t('app') }}" title="{{ 'Copy value'|t('app') }}">{{ svg('@app/icons/copy.svg') }}</button>
+    {% endif %}
+</div>
