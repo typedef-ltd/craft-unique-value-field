@@ -49,7 +49,7 @@ php craft plugin/install unique-value-field
     * **Case sensitive** — toggle (Craft 5.3+).
     * **Auto suffix duplicates** — append `-1`, `-2`, … instead of erroring.
     * **Format validation** — enable and pick a **preset** or supply a **Custom regex**; optionally set a **custom error message**.
-    * **Min/Max characters** — enforce length limits independently of format validation.
+    * **Min/Max characters** — enforce length limits for variable-length values and formats. Fixed-length presets such as UUIDs, ISO dates, and timecodes enforce their own length.
     * **Read-only** — prevent Control Panel edits after the first save (a copy button is provided).
     * **Placeholder / Code style** — optional input presentation tweaks.
 

@@ -48,6 +48,12 @@ class UniqueValueField extends Field implements InlineEditableFieldInterface, So
     public const FORMAT_PRESET_NUMERIC_CODE = 'numericCode';
     public const FORMAT_PRESET_CUSTOM = 'custom';
 
+    private const FORMAT_PRESET_FIXED_LENGTHS = [
+        self::FORMAT_PRESET_UUID_V4 => 36,
+        self::FORMAT_PRESET_ISO_DATE => 10,
+        self::FORMAT_PRESET_TIMECODE => 8,
+    ];
+
     /**
      * Whether uniqueness should be case-sensitive
      *
@@ -207,9 +213,16 @@ class UniqueValueField extends Field implements InlineEditableFieldInterface, So
     public function getSettings(): array
     {
         $settings = parent::getSettings();
+
         if (isset($settings['placeholder']) && !Craft::$app->getDb()->getSupportsMb4()) {
             $settings['placeholder'] = StringHelper::emojiToShortcodes($settings['placeholder']);
         }
+
+        if ($this->getFixedCharacterLength() !== null) {
+            $settings['minChars'] = null;
+            $settings['maxChars'] = null;
+        }
+
         return $settings;
     }
 
@@ -217,11 +230,13 @@ class UniqueValueField extends Field implements InlineEditableFieldInterface, So
     {
         $rules = parent::defineRules();
 
-        $rules[] = [['minChars'], 'integer', 'min' => 0];
-        $rules[] = [['maxChars'], 'integer', 'min' => 1];
+        if ($this->getFixedCharacterLength() === null) {
+            $rules[] = [['minChars'], 'integer', 'min' => 0];
+            $rules[] = [['maxChars'], 'integer', 'min' => 1];
 
-        if ($this->maxChars && $this->minChars) {
-            $rules[] = [['maxChars'], 'integer', 'min' => $this->minChars];
+            if ($this->minChars !== null && $this->maxChars !== null) {
+                $rules[] = [['maxChars'], 'integer', 'min' => $this->minChars];
+            }
         }
 
         $rules[] = [
@@ -263,6 +278,7 @@ class UniqueValueField extends Field implements InlineEditableFieldInterface, So
         return Craft::$app->getView()->renderTemplate('unique-value-field/uniquevaluefield/settings.twig', [
             'field' => $this,
             'presets' => $this->formatPresets(),
+            'fixedLengthPresets' => self::FORMAT_PRESET_FIXED_LENGTHS,
         ]);
     }
 
@@ -350,17 +366,17 @@ class UniqueValueField extends Field implements InlineEditableFieldInterface, So
 
     public function getElementValidationRules(): array
     {
-        return [
-            [
-                'string',
-                'min' => $this->minChars ?? null,
-                'max' => $this->maxChars ?? null,
-                'encoding' => 'UTF-8',
-            ],
-            [
-                'validateUniqueValue',
-            ],
+        $stringRule = [
+            'string',
+            'encoding' => 'UTF-8',
         ];
+
+        if ($this->getFixedCharacterLength() === null) {
+            $stringRule['min'] = $this->minChars;
+            $stringRule['max'] = $this->maxChars;
+        }
+
+        return [$stringRule, ['validateUniqueValue']];
     }
 
     /**
@@ -514,7 +530,7 @@ class UniqueValueField extends Field implements InlineEditableFieldInterface, So
                 }
                 break;
             case self::FORMAT_PRESET_TIMECODE:
-                $valid = preg_match('/^([01]?\d|2[0-3]):[0-5]\d:[0-5]\d$/', $value);
+                $valid = preg_match('/^(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d$/', $value);
                 break;
             case self::FORMAT_PRESET_E164_PHONE:
                 $valid = preg_match('/^\+\d{1,15}$/', $value);
@@ -561,16 +577,7 @@ class UniqueValueField extends Field implements InlineEditableFieldInterface, So
                 $valid = preg_match('/^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/', $value);
                 break;
             case self::FORMAT_PRESET_NUMERIC_CODE:
-                if ($this->minChars && $this->maxChars) {
-                    $pattern = '/^\d{' . $this->minChars . ',' . $this->maxChars . '}$/';
-                } elseif ($this->minChars) {
-                    $pattern = '/^\d{' . $this->minChars . ',}$/';
-                } elseif ($this->maxChars) {
-                    $pattern = '/^\d{0,' . $this->maxChars . '}$/';
-                } else {
-                    $pattern = '/^\d*$/';
-                }
-                $valid = preg_match($pattern, $value);
+                $valid = preg_match('/^\d+$/', $value);
                 break;
             case self::FORMAT_PRESET_CUSTOM:
                 // Guard against huge inputs with expensive patterns
@@ -611,6 +618,15 @@ class UniqueValueField extends Field implements InlineEditableFieldInterface, So
     public function allowCaseInsensitive(): bool
     {
         return version_compare(Craft::$app->getVersion(), '5.3', '>=');
+    }
+
+    public function getFixedCharacterLength(): ?int
+    {
+        if (!$this->enableFormatValidation) {
+            return null;
+        }
+
+        return self::FORMAT_PRESET_FIXED_LENGTHS[$this->formatPreset] ?? null;
     }
 
     /**

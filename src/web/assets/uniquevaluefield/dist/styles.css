@@ -1,6 +1,9 @@
 .unique_value_field_wrapper {
-    display: flex;
     position: relative;
+}
+
+.unique_value_field_wrapper.readonly {
+    display: flex;
 }
 
 .errors .unique_value_field_wrapper input {

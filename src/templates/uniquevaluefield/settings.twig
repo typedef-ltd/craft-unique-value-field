@@ -140,21 +140,40 @@
     }) }}
 </div>
 
-<div data-id="character-range-limits" class="nested-fields">
+{% set fixedCharacterLength = field.getFixedCharacterLength() %}
+
+<input type="hidden" name="minChars" value="">
+<input type="hidden" name="maxChars" value="">
+
+<div data-id="character-range-limits" class="nested-fields{% if fixedCharacterLength is not null %} disabled{% endif %}">
     {{ forms.textField({
         label: "Minimum characters"|t('unique-value-field'),
         id: 'min-chars',
         name: 'minChars',
-        value: field.minChars,
+        value: fixedCharacterLength ?? field.minChars,
         size: 3,
+        inputAttributes: {
+            disabled: fixedCharacterLength is not null,
+            data: {
+                'character-limit-input': true,
+                'configured-value': field.minChars ?? '',
+            }
+        }
     }) }}
 
     {{ forms.textField({
         label: "Maximum characters"|t('unique-value-field'),
         id: 'max-chars',
         name: 'maxChars',
-        value: field.maxChars,
+        value: fixedCharacterLength ?? field.maxChars,
         size: 3,
+        inputAttributes: {
+            disabled: fixedCharacterLength is not null,
+            data: {
+                'character-limit-input': true,
+                'configured-value': field.maxChars ?? '',
+            }
+        }
     }) }}
 </div>
 
@@ -168,25 +187,81 @@
 </div>
 
 <script>
-    const formatPresets = document.querySelector('[data-format-preset-select]');
-    const formatValidationInput = document.querySelector('[data-enable-format-validation] input[type="checkbox"]');
-    const autoSuffixDuplicates = document.querySelector('[data-id="auto-suffix-duplicates"]');
+    const formatPresets = document.querySelector('[data-format-preset-select]')
+    const formatValidationSwitch = document.querySelector('[data-enable-format-validation]')
+    const autoSuffixDuplicates = document.querySelector('[data-id="auto-suffix-duplicates"]')
+    const characterRangeLimits = document.querySelector('[data-id="character-range-limits"]')
+    const characterLimitInputs = [...document.querySelectorAll('[data-character-limit-input]')]
+    const fixedLengthPresets = {{ fixedLengthPresets|json_encode|raw }}
 
-    function formatPresetAllowsAutoSuffixDuplicates() {
-        return (formatPresets.value === '' || formatPresets.value === 'slug');
-    }
+    function updateSettings()
+    {
+        const formatValidationEnabled = formatValidationSwitch.getAttribute('aria-checked') === 'true'
+        const formatPreset = formatPresets.value
 
-    function updateAutoSuffixDuplicatesState() {
-        const formatValidationEnabled = !!(formatValidationInput && formatValidationInput.checked);
-        const allowed = !formatValidationEnabled || formatPresetAllowsAutoSuffixDuplicates();
-        autoSuffixDuplicates.classList.toggle('disabled', !allowed);
-    }
+        let autoSuffixAllowed = true
 
-    if (formatPresets && autoSuffixDuplicates) {
-        document.addEventListener('change', (e) => {
-            if (e.target.matches('[data-format-preset-select]') || e.target === formatValidationInput) {
-                updateAutoSuffixDuplicatesState();
+        if (formatValidationEnabled)
+        {
+            autoSuffixAllowed = false
+
+            if (formatPreset === '' || formatPreset === 'slug')
+            {
+                autoSuffixAllowed = true
             }
-        });
+        }
+
+        autoSuffixDuplicates.classList.toggle('disabled', !autoSuffixAllowed)
+
+        let fixedCharacterLength = null
+
+        if (formatValidationEnabled)
+        {
+            if (Object.prototype.hasOwnProperty.call(fixedLengthPresets, formatPreset))
+            {
+                fixedCharacterLength = fixedLengthPresets[formatPreset]
+            }
+        }
+
+        if (fixedCharacterLength === null)
+        {
+            characterRangeLimits.classList.remove('disabled')
+
+            for (const input of characterLimitInputs)
+            {
+                if (input.disabled)
+                {
+                    input.disabled = false
+                    input.value = input.dataset.configuredValue ?? ''
+                }
+            }
+        }
+        else
+        {
+            characterRangeLimits.classList.add('disabled')
+
+            for (const input of characterLimitInputs)
+            {
+                if (!input.disabled)
+                {
+                    input.dataset.configuredValue = input.value
+                }
+
+                input.value = String(fixedCharacterLength)
+                input.disabled = true
+            }
+        }
+    }
+
+    if (formatPresets && formatValidationSwitch && autoSuffixDuplicates && characterRangeLimits)
+    {
+        formatPresets.addEventListener('change', updateSettings)
+
+        formatValidationSwitch.addEventListener('click', () =>
+        {
+            requestAnimationFrame(updateSettings)
+        })
+
+        updateSettings()
     }
 </script>

@@ -231,6 +231,13 @@ class CoreBehaviourTest extends IntegrationTestCase
         ]);
         self::assertSame('hello-world', $slug->normalizeValue('  HELLO--WORLD  ', null));
         self::assertSame('hello-world', $slug->normalizeValueFromRequest('  HELLO--WORLD  ', null));
+
+        $timecode = new UniqueValueField([
+            'enableFormatValidation' => true,
+            'formatPreset' => UniqueValueField::FORMAT_PRESET_TIMECODE,
+        ]);
+        self::assertNull($timecode->validateFormat('09:30:00'));
+        self::assertNotNull($timecode->validateFormat('9:30:00'));
     }
 
     public function testEntrySectionScopeAllowsSameValueAcrossSections(): void
@@ -298,5 +305,24 @@ class CoreBehaviourTest extends IntegrationTestCase
 
         self::assertInstanceOf(Entry::class, $first);
         self::assertInstanceOf(Entry::class, $second);
+    }
+
+    public function testFixedLengthPresetIgnoresConfiguredCharacterLimits(): void
+    {
+        $field = $this->createUniqueField([
+            'enableFormatValidation' => true,
+            'formatPreset' => UniqueValueField::FORMAT_PRESET_UUID_V4,
+            'minChars' => 1,
+            'maxChars' => 8,
+        ]);
+
+        $type = $this->createEntryType('article', [$field]);
+        $section = $this->createSection('articles', [$type]);
+
+        $entry = $this->createEntry($section, $type, [
+            $field->handle => '550e8400-e29b-41d4-a716-446655440000',
+        ]);
+
+        self::assertInstanceOf(Entry::class, $entry);
     }
 }

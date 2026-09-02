@@ -7,6 +7,8 @@
     and not (name in element.errors|keys)
 %}
 
+{% set maximumCharacters = field.getFixedCharacterLength() ?? field.maxChars %}
+
 {% set params = {
     id: id ?? field.getInputId(),
     describedBy: field.describedBy,
@@ -18,15 +20,15 @@
         readOnly ? 'readonly',
         field.code ? 'code',
     ]|filter,
-    maxlength: field.maxChars,
-    showCharsLeft: true,
+    maxlength: maximumCharacters,
+    showCharsLeft: not readOnly and maximumCharacters is not null,
     placeholder: placeholder,
     required: field.required,
     orientation: orientation ?? null,
     disabled: readOnly ?? null
 } %}
 
-<div class="unique_value_field_wrapper">
+<div class="unique_value_field_wrapper{% if readOnly %} readonly{% endif %}">
     {{ forms.text(params) }}
     {% if readOnly %}
         <button type="button" class="unique_value_field_copy_button" aria-label="{{ 'Copy value'|t('app') }}" title="{{ 'Copy value'|t('app') }}">{{ svg('@app/icons/copy.svg') }}</button>
