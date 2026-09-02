@@ -196,6 +196,11 @@ class UniqueValueField extends Field implements InlineEditableFieldInterface, So
         return 'string|null';
     }
 
+    public static function icon(): string
+    {
+        return __DIR__ . '/../icon-mask.svg';
+    }
+
     /**
      * @throws InvalidConfigException
      */
